@@ -25,6 +25,7 @@ module.exports = {
     },
 
     usuarios() {
+        
         return db('usuarios')
     },
     usuario(_, { filtro }) {
