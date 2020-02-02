@@ -3,7 +3,7 @@ const jwt = require('jwt-simple')
 module.exports = async ({ req }) => {
 
     //Teste em ambiente de desenvolvimento
-    await require('./simularUsuarioLogado.js')(req)
+    // await require('./simularUsuarioLogado.js')(req)
 
     const auth = req.headers.authorization
     
@@ -39,9 +39,6 @@ module.exports = async ({ req }) => {
     }
 
     const err = new Error('Acesso negado!')
-
-    console.log(usuario)
-    console.log(admin)
     
     return {
         usuario,
