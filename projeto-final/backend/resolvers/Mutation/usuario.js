@@ -1,19 +1,54 @@
+const bcrypt = require('bcrypt-nodejs')
 const db = require('../../config/db')
 const { perfil: obterPerfil } = require('../Query/perfil')
 const { usuario: obterUsuario } = require('../Query/usuario')
 
-module.exports = {
-    async novoUsuario(_, { dados }) {
+const mutations = {
+
+    async registrarUsuario(_, { dados }) {
+
+        return mutations.novoUsuario(_, {
+            
+            dados: {
+                nome: dados.nome,
+                email: dados.email,
+                senha: dados.senha
+            }
+
+        })
+
+    },
+    async novoUsuario(_, { dados }, ctx) {
+
+        ctx && ctx.validarAdmin() // É um padrão de validação do javascript. Se ctx estiver válido (not null) ele executa o validarAdmin() e este estando válido segue o código abaixo
+
         try {
             const idsPerfis = []
-            if(dados.perfis) {
-                for(let filtro of dados.perfis) {
-                    const perfil = await obterPerfil(_, {
-                        filtro
-                    })
-                    if(perfil) idsPerfis.push(perfil.id)
-                }
+
+            if(!dados.perfis || !dados.perfis.length) {
+
+                dados.perfis = [{
+                    nome: 'comum'
+                }]
+
             }
+            
+            
+            for(let filtro of dados.perfis) {
+            
+                const perfil = await obterPerfil(_, {
+            
+                    filtro
+            
+                })
+            
+                if(perfil) idsPerfis.push(perfil.id)
+            
+            }
+
+            const salt = bcrypt.genSaltSync()
+            dados.senha = bcrypt.hashSync(dados.senha, salt)
+            
 
             delete dados.perfis
             const [ id ] = await db('usuarios')
@@ -30,7 +65,10 @@ module.exports = {
             throw new Error(e.sqlMessage)
         }
     },
-    async excluirUsuario(_, args) {
+    async excluirUsuario(_, args, ctx) {
+
+        ctx && ctx.validarAdmin() // É um padrão de validação do javascript. Se ctx estiver válido (not null) ele executa o validarAdmin() e este estando válido segue o código abaixo
+
         try {
             const usuario = await obterUsuario(_, args)
             if(usuario) {
@@ -46,12 +84,15 @@ module.exports = {
         }
 
     },
-    async alterarUsuario(_, { filtro, dados }) {
+    async alterarUsuario(_, { filtro, dados }, ctx) {
+
+        ctx && ctx.validarUsuarioFiltro(filtro)
+
         try {
             const usuario = await obterUsuario(_, { filtro })
             if(usuario) {
                 const { id } = usuario
-                if(dados.perfis) {
+                if(ctx.admin && dados.perfis) {
                     await db('usuarios_perfis')
                         .where({ usuario_id: id }).delete()
 
@@ -70,6 +111,13 @@ module.exports = {
                     }
                 }
 
+                if(dados.senha) {
+
+                    const salt = bcrypt.genSaltSync()
+                    dados.senha = bcrypt.hashSync(dados.senha, salt)
+
+                }
+
                 delete dados.perfis
                 await db('usuarios')
                     .where({ id })
@@ -81,3 +129,5 @@ module.exports = {
         }
     }
 }
+
+module.exports = mutations
