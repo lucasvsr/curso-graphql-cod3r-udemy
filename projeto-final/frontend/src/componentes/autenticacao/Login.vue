@@ -41,6 +41,7 @@
 <script>
 import { mapActions } from 'vuex'
 import Erros from '../comum/Erros'
+import gql from 'graphql-tag'
 
 export default {
     components: { Erros },
@@ -54,13 +55,46 @@ export default {
     computed: {
         perfis() {
             return this.dados && this.dados.perfis &&
-                this.dados.perfis.map(p => p.nome).join(',')
+                this.dados.perfis.map(p => p.rotulo).join(',')
         }
     },
     methods: {
         ...mapActions(['setUsuario']),
         login() {
-            // implementar
+            
+            this.$api.query({
+                query: gql`
+                    query(
+                        $email: String!
+                        $senha: String!
+                    ) {
+                        login(
+                            dados: {
+                                email: $email
+                                senha: $senha
+                            }
+                        ) {
+                            id nome email token perfis { rotulo }
+                        }
+                    }
+                `,
+                variables: {
+                    email: this.usuario.email,
+                    senha: this.usuario.senha
+                }
+            }).then((result) => {
+
+                this.dados = result.data.login
+                this.usuario = {}
+                this.erros = null
+                this.setUsuario(this.dados)
+                
+            }).catch((err) => {
+
+                this.erros = err
+                
+            });
+
         }
     }
 }
