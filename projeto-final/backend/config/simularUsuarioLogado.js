@@ -27,7 +27,7 @@ const getUsuario = async nomePerfil => {
 }
 
 module.exports = async req => {
-    let usuario = await getUsuario('comum')
+    let usuario = await getUsuario('admin')
 
     if(usuario) {
         
