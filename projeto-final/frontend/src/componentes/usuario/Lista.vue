@@ -20,7 +20,7 @@
                         <td>{{ props.item.nome }}</td>
                         <td>{{ props.item.email }}</td>
                         <td>{{ props.item.perfis
-                                .map(p => p.nome)
+                                .map(p => p.rotulo)
                                 .join(', ') }}</td>
                     </template>
                 </v-data-table>
@@ -31,6 +31,7 @@
 
 <script>
 import Erros from '../comum/Erros'
+import gql from 'graphql-tag'
 
 export default {
     components: { Erros },
@@ -48,7 +49,32 @@ export default {
     },
     methods: {
         obterUsuarios() {
-            // 
+            
+            this.$api.query({
+                query: gql`
+
+                    query {
+
+                        usuarios {
+                        id nome email perfis { rotulo }
+                    }
+
+                    }
+                    
+                `,
+                fetchPolicy: 'network-only' //Serve para que o sistema recupere as informações do serviço, apenas. Cas contrário, a ordem de prescedência é cache>serviço.
+            }).then((result) => {
+
+                this.usuarios = result.data.usuarios
+                this.erros = null
+                
+            }).catch((err) => {
+                
+                this.usuarios = []
+                this.erros = err
+
+            });
+
         }
     }
 }
