@@ -110,14 +110,14 @@ export default {
             }).then((result) => {
 
                 this.dados = result.data.novoUsuario
-                console.log(dados);
-                
-                this.usuario = {}
                 this.erros = null
+                this.usuario = {}
                 
             }).catch((err) => {
 
                 this.erros = err
+                console.log(err);
+                
                 
             });
 
